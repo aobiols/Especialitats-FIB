@@ -1,19 +1,107 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Google Charts Jquery</title>
 <meta content='width=device-width, initial-scale=1' name='viewport'/>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="ajaxGetPost.js" type="text/javascript"></script>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script>
 
 var data;
+var data_inici;
 var options,options2;
-var chart1, chart2,chart3,chart4;
+var chart1, chart4;
 var jsonData;
+var jsonDataInici;
 
+
+function chartsInici(data_in,ChartType)
+{
+
+	var c2=ChartType;
+	jsonDataInici=data_in;
+	
+
+	google.load("visualization", "1", {packages:["corechart"], callback: drawVisualizationInici});
+    
+	
+	function drawVisualizationInici() 
+	{
+	data_inici = new google.visualization.DataTable();
+	data_inici.addColumn('string', 'Curs');
+	data_inici.addColumn('number', 'COMPUTACIÓ');
+	data_inici.addColumn('number', 'ENGINYERIA DECOMPUTADORS');
+	data_inici.addColumn('number', 'ENGINYERIA DEL SOFTWARE');
+	data_inici.addColumn('number', 'SISTEMES D\'INFORMACIÓ');
+	data_inici.addColumn('number', 'TECNOLOGIESDE LA INFORMACIÓ');
+	
+	var num_estudiants_inici=0;
+	var curs_inici;
+	var i_especialitat=0;
+	var num_C=0,num_EC=0,num_ES=0,num_SI=0,num_TI=0;
+	
+	
+	
+	$.each(jsonDataInici.results, function(i,valor)
+		{
+		
+		curs_inici = valor.curs_inici + "(" + valor.quad_inici + ")";
+		
+		
+		if (i_especialitat==0) {
+		  num_C=valor.num_estudiants_inici;
+		}
+		else if (i_especialitat==1) {
+		  num_EC=valor.num_estudiants_inici;
+		}
+		else if (i_especialitat==2) {
+		  num_ES=valor.num_estudiants_inici;
+		}
+		else if (i_especialitat==3) {
+		  num_SI=valor.num_estudiants_inici;
+		}
+		else if (i_especialitat==4) {
+		  num_TI=valor.num_estudiants_inici;
+  		  data_inici.addRows([ [curs_inici, num_C,num_EC,num_ES,num_SI,num_TI]]);
+		  i_especialitat=-1;
+		}
+		
+		i_especialitat = i_especialitat + 1;
+	
+
+		});
+		
+	optionsInici = {
+			title: 'Entrada d\'estudiants per especialitat',
+			subtitle: 'per curs',
+			colorAxis: {colors: ['#54C492', '#cc0000']},
+			datalessRegionColor: '#dedede',
+			defaultColor: '#dedede',	
+			startup: true,
+			animation:{
+				duration: 3000,
+				startup: true,
+				easing: 'out'
+			},
+			legend: {
+				maxLines: 1,
+				textStyle: {
+					fontSize: 10					
+				}
+			}
+		};
+		
+	chartInici = new google.visualization.LineChart(document.getElementById('linies_div'));
+	
+	
+	chartInici.draw(data_inici, optionsInici);
+	}
+	
+}
+	
 function charts(data_in,ChartType)
 {
 
@@ -35,29 +123,31 @@ function charts(data_in,ChartType)
 
 	if(c=="DonutChart")  {
 	   options2 = {
-			title : "Alumnes per especialitat curs 2016-2017 (2)",
+			title : "Estudiants actuals per especialitat",
 			colorAxis: {colors: ['#54C492', '#cc0000']},
 			datalessRegionColor: '#dedede',
 			defaultColor: '#dedede',
 	        pieHole: 0.4,
 			animation:{
 				duration: 3000,
+				startup: true,
 				easing: 'out'
-			},
+			}
 	    };
 	}
 	else
 	{
 		options = {
-		title : "Alumnes per especialitat curs 2016-2017 (2)",
+		title : "Estudiants actuals per especialitat)",
 		colorAxis: {colors: ['#54C492', '#cc0000']},
 		datalessRegionColor: '#dedede',
 		defaultColor: '#dedede',
+		startup: true,
 		animation:{
         duration: 3000,
+		startup: true,
         easing: 'out'
-      },
-
+      }
 		};
 	}
 
@@ -66,14 +156,7 @@ function charts(data_in,ChartType)
 		chart1 = new google.visualization.ColumnChart(document.getElementById('chart_div'));
 		chart1.draw(data, options);
 	}
-	else if(c=="PieChart") {
-		chart2 = new google.visualization.PieChart(document.getElementById('piechart_div'));
-		chart2.draw(data, options);
-	}
-	else if(c=="BarChart") {
-		chart3 = new google.visualization.BarChart(document.getElementById('bar_div'));
-		chart3.draw(data, options);
-	}
+
 	else if(c=="DonutChart") {
 		chart4 = new google.visualization.PieChart(document.getElementById('donut_div'));
 		chart4.draw(data, options2);
@@ -84,8 +167,12 @@ function charts(data_in,ChartType)
 	
 }
 
+
+
  function apretaBoto()  {
 		var triada = document.getElementById('sexe')
+		var triadaCursQuad = document.getElementById('cursQuad')
+		
 		
 		$.each(jsonData.results, function(i,valor)
 		{
@@ -100,9 +187,73 @@ function charts(data_in,ChartType)
 		});
 		
 		chart1.draw(data, options);
-		chart2.draw(data, options);
-		chart3.draw(data, options);
 		chart4.draw(data, options2);
+		
+		// ARA LA PART DE BAIX, LA DE LES DADES d'INICI
+		
+		var total=0;
+		var i_especialitat=0;
+		var num_C=0,num_EC=0,num_ES=0,num_SI=0,num_TI=0;
+		var curs_anterior="";
+		
+		if (triadaCursQuad.value=='Quad')
+			curs_anterior = "2011(1)";
+		else  
+			curs_anterior = "2011" + " ";
+			  
+	
+		// Les esborrem totes
+		data_inici.removeRows(0,data_inici.getNumberOfRows());
+		
+		$.each(jsonDataInici.results, function(i,valor)
+		{
+		
+			if (triadaCursQuad.value=='Quad')
+			  curs_inici = valor.curs_inici + "(" + valor.quad_inici + ")";
+			else  
+			  curs_inici = valor.curs_inici + " ";
+			  
+			 if (curs_anterior!=curs_inici) {
+				  data_inici.addRows([ [curs_anterior, num_C,num_EC,num_ES,num_SI,num_TI]]);
+				  curs_anterior=curs_inici;
+				  num_C=0; num_EC=0;num_ES=0;num_SI=0;num_TI=0;
+			 }
+			 
+			if (sexe.value=='Tots')
+				total=valor.num_estudiants_inici;
+			else if (sexe.value=='Homes')	
+				total=valor.num_homes_inici;
+			else	
+				total=valor.num_dones_inici;
+			  
+		
+			if (i_especialitat==0) {
+			  num_C= num_C + total;
+			}
+			else if (i_especialitat==1) {
+			  num_EC= num_EC + total;
+			}
+			else if (i_especialitat==2) {
+			  num_ES= num_ES + total;
+			}
+			else if (i_especialitat==3) {
+			  num_SI=  num_SI + total;
+			}
+			else if (i_especialitat==4) {
+			   num_TI= num_TI + total;
+			  i_especialitat=-1;
+			}
+		
+			i_especialitat = i_especialitat + 1;
+	
+		});
+		
+		// Insereixo les dades acumulades de la ultima fila
+		data_inici.addRows([ [curs_inici, num_C,num_EC,num_ES,num_SI,num_TI]]);
+		
+		chartInici.draw(data_inici, optionsInici);
+		
+		
     }
 	
 
@@ -114,11 +265,19 @@ url='especialitats.json';
 ajax_data('GET',url, function(data)
 		{
 			charts(data,"ColumnChart");	
-			charts(data,"PieChart");	
+//			charts(data,"PieChart");	
 			charts(data,"DonutChart");	
-			charts(data,"BarChart");
-		});
+		});	
+
+
+url='especialitats-inici.json';
+ajax_data('GET',url, function(data)
+		{
+			chartsInici(data,"ColumnChart");	
+			});	
+			
 });
+
 </script>
 
 <style>
@@ -126,7 +285,7 @@ body{font-family:arial}
 </style>
 </head>
 <body style="text-align:center">
-<h1>Indicadors d'Especialitat de la FIB</h1>
+<h1>Indicadors d'Especialitat del grau en Enginyeria informàtica de la FIB</h1>
 
  
    Sexe: <select id="sexe" onchange="apretaBoto()">
@@ -134,16 +293,27 @@ body{font-family:arial}
 	<option value="Homes">Homes</option>
 	<option value="Dones">Dones</option>
 	</select> 
-	</input> 
 	
-<div id="chart_div"></div>
+	
 
-<table>
-<TR><TD><div id="donut_div" style="width: 700px; height: 250px;"></div></TD>
-	<TD><div id="piechart_div" style="width: 700px; height: 250px;"></div></TD>
+
+<center>
+<table border=0>
+<TR>
+	<TD><div id="chart_div" style="width: 900px; height: 300px"></div></TD>
+	<TD><div id="donut_div" style="width: 550px; height: 300px"></div></TD>
+	<TR><TD COLSPAN=2 ALIGN=CENTER>
+		Període:<select id="cursQuad" onchange="apretaBoto()">
+			<option value="Quad">Quadrimestre</option>
+			<option value="Curs">Curs</option>
+			</select> 
+
+
+	<div id="linies_div" style="width: 1250px; height: 300px;"></div></TD></TR>
 </TR>
 </TABLE>
-<div id="bar_div" style="width: 900px; height: 500px;"></div>
+
+</center>
 	
 
  
